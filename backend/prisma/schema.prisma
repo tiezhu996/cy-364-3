@@ -15,3 +15,60 @@ model OperationRecord {
   metric     String
   createdAt  DateTime @default(now())
 }
+
+model Store {
+  id          Int      @id @default(autoincrement())
+  name        String
+  code        String   @unique
+  address     String?
+  manager     String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  inventoryChecks InventoryCheck[]
+}
+
+model Product {
+  id          Int      @id @default(autoincrement())
+  name        String
+  sku         String   @unique
+  barcode     String?
+  category    String?
+  unit        String
+  price       Decimal  @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+}
+
+model InventoryCheck {
+  id          Int      @id @default(autoincrement())
+  checkNo     String   @unique
+  storeId     Int
+  store       Store    @relation(fields: [storeId], references: [id])
+  period      String
+  status      String   @default("pending")
+  operator    String?
+  remark      String?
+  totalProfit Decimal  @default(0)
+  totalLoss   Decimal  @default(0)
+  createdAt   DateTime @default(now())
+  completedAt DateTime?
+  items       InventoryCheckItem[]
+}
+
+model InventoryCheckItem {
+  id              Int      @id @default(autoincrement())
+  checkId         Int
+  check           InventoryCheck @relation(fields: [checkId], references: [id])
+  productId       Int
+  productName     String
+  productSku      String
+  unit            String
+  price           Decimal  @default(0)
+  systemStock     Int      @default(0)
+  actualStock     Int      @default(0)
+  difference      Int      @default(0)
+  differenceValue Decimal  @default(0)
+  differenceType  String?
+  remark          String?
+  createdAt       DateTime @default(now())
+}

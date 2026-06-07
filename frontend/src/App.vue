@@ -8,22 +8,36 @@ import type { OverviewResponse } from "./types";
 import FeatureStrip from "./components/FeatureStrip.vue";
 import MetricGrid from "./components/MetricGrid.vue";
 import OperationsTable from "./components/OperationsTable.vue";
+import InventoryCheckList from "./components/InventoryCheckList.vue";
 
 const overview = ref<OverviewResponse>(createFallbackOverview());
 const notice = ref(REQUEST_MESSAGES.overviewFallback);
+const activeTab = ref("operations");
+const inventoryListRef = ref<InstanceType<typeof InventoryCheckList> | null>(null);
 
 function goHealth() {
   window.location.href = REQUEST_MESSAGES.healthPath;
 }
 
-onMounted(async () => {
+async function refreshOverview() {
   try {
     overview.value = await fetchOverview();
     notice.value = "后端服务已联通，当前展示实时接口数据。";
   } catch {
     notice.value = REQUEST_MESSAGES.overviewFallback;
   }
-});
+}
+
+function handleTabChange(tab: string) {
+  activeTab.value = tab;
+  if (tab === "inventory") {
+    inventoryListRef.value?.loadData();
+  } else {
+    refreshOverview();
+  }
+}
+
+onMounted(refreshOverview);
 </script>
 
 <template>
@@ -45,10 +59,17 @@ onMounted(async () => {
         <MetricGrid :items="overview.kpis" />
       </div>
       <FeatureStrip :items="overview.features" />
-      <section class="work-panel">
-        <h2>运营任务流</h2>
-        <OperationsTable :records="overview.records" />
-      </section>
+
+      <el-tabs v-model="activeTab" class="main-tabs" @tab-change="handleTabChange">
+        <el-tab-pane label="运营任务流" name="operations">
+          <section class="work-panel">
+            <OperationsTable :records="overview.records" />
+          </section>
+        </el-tab-pane>
+        <el-tab-pane label="门店盘点" name="inventory">
+          <InventoryCheckList ref="inventoryListRef" />
+        </el-tab-pane>
+      </el-tabs>
     </section>
   </main>
 </template>
